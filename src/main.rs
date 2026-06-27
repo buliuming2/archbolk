@@ -33,15 +33,30 @@ static MULTIBOOT2_HEADER: [u8; 24] = {
 /// Rust entry point — called from the 64-bit boot assembly.
 #[unsafe(no_mangle)]
 pub extern "C" fn _start_rust() -> ! {
+    // Write directly to VGA buffer at 0xB8000 using inline asm
+    // to avoid Rust's debug-mode UB checks on pointer arithmetic.
+    let msg = b"archbolk kernel booting...\n";
+    let mut i = 0usize;
+    while i < msg.len() {
+        let byte = msg[i];
+        unsafe {
+            core::arch::asm!(
+                "mov byte ptr [{vga} + {off}], {byte}",
+                "mov byte ptr [{vga} + {off} + 1], 0x02",
+                vga = in(reg) 0xB8000usize,
+                off = in(reg) i * 2,
+                byte = in(reg_byte) byte,
+            );
+        }
+        i += 1;
+    }
+
     // Initialize serial port
     serial::SERIAL.lock().init();
     serial::SERIAL.unlock();
 
-    serial_println!("archbolk kernel booting...");
-    serial_println!("Running in 64-bit long mode.");
-
-    println!("Hello from archbolk kernel!");
-    println!("Running in 64-bit long mode.");
+    // Print via serial
+    serial_println!("archbolk serial output OK");
 
     loop {}
 }
