@@ -23,8 +23,13 @@ SECTIONS {
         *(.rodata .rodata.*)
     }
 
+    .got : ALIGN(4K) {
+        *(.got)
+    }
+
     .data : ALIGN(4K) {
         *(.data .data.*)
+        KEEP(*(.data.gdt))
     }
 
     .bss : ALIGN(4K) {

@@ -7,6 +7,7 @@ name = "archbolk-kernel"
 version = "0.1.0"
 dependencies = [
  "cc",
+ "volatile",
 ]
 
 [[package]]
@@ -30,3 +31,9 @@ name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+
+[[package]]
+name = "volatile"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "442887c63f2c839b346c192d047a7c87e73d0689c9157b00b53dcc27dd5ea793"

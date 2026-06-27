@@ -48,16 +48,22 @@ _start:
     orl     $0x20, %eax
     movl    %eax, %cr4
 
-    # Build GDT descriptor on stack (PC-relative)
-    call    .Lget_eip
-.Lget_eip:
-    popl    %ebx                      # ebx = runtime address of .Lget_eip
-    leal    (gdt64 - .Lget_eip)(%ebx), %eax  # eax = runtime address of gdt64
-    movl    %eax, .Lgdt_desc + 2      # patch the pointer in the descriptor
-.Lgdt_desc:
-    .word   gdt64_end - gdt64 - 1    # limit
-    .quad   0                         # base (patched above)
-    lgdt    .Lgdt_desc - .Lget_eip(%ebx)  # load descriptor via PC-relative
+    # Build GDT at a fixed location (0x800, below stack at 0x7000)
+    # This avoids linker moving .quad constants to .rodata
+    movl    $0x800, %edi
+    movl    $0, (%edi)              # null descriptor (bytes 0-3)
+    movl    $0, 4(%edi)             # null descriptor (bytes 4-7)
+    movl    $0x00000000, 8(%edi)    # code descriptor (bytes 0-3): 0x00000000
+    movl    $0x00209800, 12(%edi)   # code descriptor (bytes 4-7): 0x00209800
+    movl    $0x00000000, 16(%edi)   # data descriptor (bytes 0-3): 0x00000000
+    movl    $0x00209200, 20(%edi)   # data descriptor (bytes 4-7): 0x00209200
+
+    # Load GDT descriptor pointing to 0x800
+    subl    $8, %esp                # make room on stack for GDTR (6 bytes)
+    movw    $23, 0(%esp)            # limit = 24 - 1 = 23
+    movl    $0x800, 2(%esp)         # base = 0x800
+    lgdt    (%esp)
+    addl    $8, %esp                # restore stack
 
     # Enable long mode
     movl    $0xC0000080, %ecx
@@ -70,23 +76,15 @@ _start:
     orl     $0x80000001, %eax
     movl    %eax, %cr0
 
-    # Far jump to 64-bit code (PC-relative)
+    # Far jump to 64-bit code
     pushl   $0x08
-    leal    (_start_64 - .Lget_eip)(%ebx), %eax
-    pushl   %eax
+    pushl   $_start_64
     lret
 
 .Lfail:
     cli
     hlt
     jmp     .Lfail
-
-.section .rodata, "a"
-.align 8
-gdt64:
-    .quad 0
-    .quad 0x0020980000000000
-gdt64_end:
 
 .section .text.boot64, "ax"
 .code64

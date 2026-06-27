@@ -18,6 +18,9 @@ iso: build
 run: iso
 	qemu-system-x86_64 -cdrom $(ISO) -serial stdio
 
+run-nographic: iso
+	qemu-system-x86_64 -cdrom $(ISO) -nographic
+
 clean:
 	cargo +nightly clean
 	rm -rf iso $(ISO)

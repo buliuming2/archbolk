@@ -1,6 +1,9 @@
 #![no_std]
 #![no_main]
 
+mod vga_buffer;
+mod serial;
+
 use core::panic::PanicInfo;
 
 #[panic_handler]
@@ -30,5 +33,15 @@ static MULTIBOOT2_HEADER: [u8; 24] = {
 /// Rust entry point — called from the 64-bit boot assembly.
 #[unsafe(no_mangle)]
 pub extern "C" fn _start_rust() -> ! {
+    // Initialize serial port
+    serial::SERIAL.lock().init();
+    serial::SERIAL.unlock();
+
+    serial_println!("archbolk kernel booting...");
+    serial_println!("Running in 64-bit long mode.");
+
+    println!("Hello from archbolk kernel!");
+    println!("Running in 64-bit long mode.");
+
     loop {}
 }
